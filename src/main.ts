@@ -16,7 +16,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: (origin, cb) => {
+    origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
       // Allow same-origin (no Origin header) and configured origins
       if (!origin) return cb(null, true);
       const allowed = config.corsOrigins;
