@@ -43,19 +43,57 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const members = {
   list: () =>
-    api<{ id: string; fullName: string; email: string | null; churchId: string }[]>('/members'),
-  get: (id: string) => api<{ id: string; fullName: string; email: string | null }>(`/members/${id}`),
-  create: (data: { fullName: string; email?: string }) =>
-    api<{ id: string; fullName: string; email: string | null }>('/members', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  update: (id: string, data: { fullName?: string; email?: string }) =>
-    api<{ id: string; fullName: string; email: string | null }>(`/members/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+    api<{ id: string; fullName: string; email: string | null; churchId: string; phone?: string; status?: string }[]>('/members'),
+  get: (id: string) => api<any>(`/members/${id}`),
+  create: (data: { fullName: string; email?: string; phone?: string; churchId?: string }) =>
+    api<any>('/members', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ fullName: string; email: string; phone: string; address: string; birthDate: string; membershipDate: string; status: string }>) =>
+    api<any>(`/members/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/members/${id}`, { method: 'DELETE' }),
+};
+
+export const tithes = {
+  list: (churchId?: string) =>
+    api<any[]>(`/tithes${churchId ? `?churchId=${churchId}` : ''}`),
+  create: (data: { memberId: string; churchId: string; amount: number; category: string; notes?: string }) =>
+    api<any>('/tithes', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { amount?: number; category?: string; notes?: string }) =>
+    api<any>(`/tithes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => api(`/tithes/${id}`, { method: 'DELETE' }),
+};
+
+export const events = {
+  list: (churchId?: string) =>
+    api<any[]>(`/events${churchId ? `?churchId=${churchId}` : ''}`),
+  get: (id: string) => api<any>(`/events/${id}`),
+  create: (data: { churchId: string; title: string; description?: string; eventDate: string; eventType: string }) =>
+    api<any>('/events', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ title: string; description: string; eventDate: string; eventType: string }>) =>
+    api<any>(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => api(`/events/${id}`, { method: 'DELETE' }),
+};
+
+export const attendance = {
+  listByEvent: (eventId: string) => api<any[]>(`/attendance/event/${eventId}`),
+  create: (data: { eventId: string; memberId: string; notes?: string }) =>
+    api<any>('/attendance', { method: 'POST', body: JSON.stringify(data) }),
+  delete: (eventId: string, memberId: string) =>
+    api(`/attendance/event/${eventId}/member/${memberId}`, { method: 'DELETE' }),
+};
+
+export const ministries = {
+  list: (churchId?: string) =>
+    api<any[]>(`/ministries${churchId ? `?churchId=${churchId}` : ''}`),
+  get: (id: string) => api<any>(`/ministries/${id}`),
+  create: (data: { churchId: string; name: string; description?: string }) =>
+    api<any>('/ministries', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; description?: string }) =>
+    api<any>(`/ministries/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => api(`/ministries/${id}`, { method: 'DELETE' }),
+  assignMember: (id: string, data: { memberId: string; role?: string }) =>
+    api<any>(`/ministries/${id}/members`, { method: 'POST', body: JSON.stringify(data) }),
+  removeMember: (id: string, memberId: string) =>
+    api(`/ministries/${id}/members/${memberId}`, { method: 'DELETE' }),
 };
 
 export const users = {

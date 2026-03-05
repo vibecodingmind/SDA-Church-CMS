@@ -22,6 +22,15 @@ export function Layout() {
           <NavLink to="/members" className={({ isActive }) => (isActive ? styles.active : '')}>
             Members
           </NavLink>
+          <NavLink to="/tithes" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Tithes
+          </NavLink>
+          <NavLink to="/events" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Events
+          </NavLink>
+          <NavLink to="/ministries" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Ministries
+          </NavLink>
           <NavLink to="/users" className={({ isActive }) => (isActive ? styles.active : '')}>
             Users
           </NavLink>

@@ -24,9 +24,17 @@ export class MembersService {
     if (!churchExists) {
       throw new NotFoundException('Church not found or not in your scope');
     }
-    return this.prisma.member.create({
-      data: { ...dto, churchId },
-    });
+    const data = {
+      churchId,
+      fullName: dto.fullName,
+      email: dto.email,
+      phone: dto.phone,
+      address: dto.address,
+      status: dto.status,
+      birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+      membershipDate: dto.membershipDate ? new Date(dto.membershipDate) : undefined,
+    };
+    return this.prisma.member.create({ data });
   }
 
   async findAll(scope: JwtPayload['scope']) {
@@ -49,10 +57,13 @@ export class MembersService {
 
   async update(id: string, dto: UpdateMemberDto, scope: JwtPayload['scope']) {
     await this.findOne(id, scope);
-    return this.prisma.member.update({
-      where: { id },
-      data: dto,
-    });
+    const { birthDate, membershipDate, ...rest } = dto;
+    const data = {
+      ...rest,
+      ...(birthDate !== undefined && { birthDate: new Date(birthDate) }),
+      ...(membershipDate !== undefined && { membershipDate: new Date(membershipDate) }),
+    };
+    return this.prisma.member.update({ where: { id }, data });
   }
 
   async remove(id: string, scope: JwtPayload['scope']) {

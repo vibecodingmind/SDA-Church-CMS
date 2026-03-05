@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { members as membersApi } from '../api/client';
 import styles from './Members.module.css';
 
-type Member = { id: string; fullName: string; email: string | null; churchId: string };
+type Member = { id: string; fullName: string; email: string | null; churchId: string; phone?: string; status?: string };
 
 export function Members() {
   const [list, setList] = useState<Member[]>([]);
@@ -12,6 +12,8 @@ export function Members() {
   const [editing, setEditing] = useState<Member | null>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [status, setStatus] = useState('ACTIVE');
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
@@ -36,9 +38,10 @@ export function Members() {
     setSubmitting(true);
     setError('');
     try {
-      await membersApi.create({ fullName, email: email || undefined });
+      await membersApi.create({ fullName, email: email || undefined, phone: phone || undefined });
       setFullName('');
       setEmail('');
+      setPhone('');
       setShowForm(false);
       load();
     } catch (err) {
@@ -71,6 +74,11 @@ export function Members() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <input
+            placeholder="Phone (optional)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
           <button type="submit" disabled={submitting}>
             {submitting ? 'Adding…' : 'Add'}
           </button>
@@ -89,6 +97,8 @@ export function Members() {
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
               <th></th>
             </tr>
           </thead>
@@ -97,13 +107,15 @@ export function Members() {
               <tr key={m.id}>
                 <td>{editing?.id === m.id ? <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={styles.inlineInput} /> : m.fullName}</td>
                 <td>{editing?.id === m.id ? <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={styles.inlineInput} /> : (m.email || '—')}</td>
+                <td>{editing?.id === m.id ? <input value={phone} onChange={(e) => setPhone(e.target.value)} className={styles.inlineInput} placeholder="Phone" /> : (m.phone || '—')}</td>
+                <td>{m.status || 'ACTIVE'}</td>
                 <td>
                   {editing?.id === m.id ? (
                     <>
                       <button className={styles.smBtn} onClick={async () => {
                         setSubmitting(true);
                         try {
-                          await membersApi.update(m.id, { fullName, email: email || undefined });
+                          await membersApi.update(m.id, { fullName, email: email || undefined, phone: phone || undefined });
                           setEditing(null);
                           load();
                         } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
@@ -113,7 +125,7 @@ export function Members() {
                     </>
                   ) : (
                     <>
-                      <button className={styles.smBtn} onClick={() => { setEditing(m); setFullName(m.fullName); setEmail(m.email || ''); }}>Edit</button>
+                      <button className={styles.smBtn} onClick={() => { setEditing(m); setFullName(m.fullName); setEmail(m.email || ''); setPhone(m.phone || ''); }}>Edit</button>
                       <button className={styles.smBtn} onClick={async () => {
                         if (confirm('Delete this member?')) {
                           setSubmitting(true);

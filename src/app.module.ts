@@ -15,6 +15,10 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { MembersModule } from './modules/members/members.module';
+import { TithesModule } from './modules/tithes/tithes.module';
+import { EventsModule } from './modules/events/events.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
+import { MinistriesModule } from './modules/ministries/ministries.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AppConfigService } from './config/config.service';
 
@@ -46,6 +50,10 @@ import { AppConfigService } from './config/config.service';
     OrganizationModule,
     AuditModule,
     MembersModule,
+    TithesModule,
+    EventsModule,
+    AttendanceModule,
+    MinistriesModule,
   ],
   controllers: [AppController],
   providers: [
