@@ -1,0 +1,272 @@
+// Church CMS IAM - Production-grade Identity & Access Management
+// Schema designed for 3,000+ churches with RBAC + scope-based access control
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+// =============================================================================
+// Organization Hierarchy: Conference → District → Church
+// =============================================================================
+
+model Conference {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  districts District[]
+  users     User[]
+
+  @@map("conferences")
+}
+
+model District {
+  id           String   @id @default(uuid())
+  conferenceId String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  churches   Church[]
+  users       User[]
+
+  @@index([conferenceId])
+  @@map("districts")
+}
+
+model Church {
+  id         String   @id @default(uuid())
+  districtId String
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  users    User[]
+  members  Member[]
+
+  @@index([districtId])
+  @@map("churches")
+}
+
+// Member: Example entity for scope-filtered GET /members route
+model Member {
+  id        String   @id @default(uuid())
+  churchId  String
+  fullName  String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@map("members")
+}
+
+// =============================================================================
+// RBAC: Role & Permission (dynamic, not hardcoded)
+// =============================================================================
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users           User[]
+  rolePermissions RolePermission[]
+  userInvites     UserInvite[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "MEMBER:VIEW", "MEMBER:CREATE"
+  resource    String   // e.g., "MEMBER", "USER"
+  action      String   // e.g., "VIEW", "CREATE", "UPDATE", "DELETE"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// =============================================================================
+// User: Core identity with role assignment and scope hierarchy
+// Scope: churchId (most specific) | districtId | conferenceId (broadest)
+// =============================================================================
+
+model User {
+  id                   String     @id @default(uuid())
+  fullName             String
+  email                String     @unique
+  passwordHash         String
+  roleId               String
+  churchId             String?
+  districtId           String?
+  conferenceId         String?
+  status               UserStatus @default(ACTIVE)
+  termStart            DateTime?
+  termEnd              DateTime?
+  failedLoginAttempts  Int        @default(0)
+  lockedUntil          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  role       Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  church     Church?       @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  district   District?     @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  conference Conference?  @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  loginAttempts       LoginAttempt[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([email])
+  @@index([roleId])
+  @@index([churchId])
+  @@index([districtId])
+  @@index([conferenceId])
+  @@index([status])
+  @@map("users")
+}
+
+// =============================================================================
+// Refresh Token: Hashed storage for token rotation (never store plain tokens)
+// =============================================================================
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    // SHA-256 hash of refresh token
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// =============================================================================
+// Audit Log: Immutable audit trail for sensitive actions
+// =============================================================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  timestamp DateTime @default(now())
+  ipAddress String?
+  metadata  Json?    // Additional context (e.g., resourceId, changes)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([resource])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// Login Attempt: Tracks failed logins for account lockout (5 attempts = lock)
+// =============================================================================
+
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String   // Track by email even if user not found (prevents enumeration)
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
+
+// =============================================================================
+// Password Reset: Time-limited tokens for forgot-password flow
+// =============================================================================
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+// =============================================================================
+// User Invite: Pending invitations by email
+// =============================================================================
+
+model UserInvite {
+  id           String    @id @default(uuid())
+  email        String
+  roleId       String
+  churchId     String?
+  districtId   String?
+  conferenceId String?
+  tokenHash    String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([email])
+  @@index([tokenHash])
+  @@map("user_invites")
+}
