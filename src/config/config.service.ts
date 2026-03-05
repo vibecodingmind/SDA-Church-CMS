@@ -40,8 +40,10 @@ export class AppConfigService {
   }
 
   get corsOrigins(): string[] {
-    const origins = this.config.get<string>('CORS_ORIGINS', 'http://localhost:3000');
-    return origins.split(',').map((o) => o.trim());
+    const raw = this.config.get<string>('CORS_ORIGINS', '');
+    const list = raw.split(',').map((o) => o.trim()).filter(Boolean);
+    if (list.length > 0) return list;
+    return this.nodeEnv === 'production' ? ['*'] : ['http://localhost:3000', 'http://localhost:5173'];
   }
 
   get rateLimitTtl(): number {
