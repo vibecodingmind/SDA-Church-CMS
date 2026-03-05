@@ -19,6 +19,8 @@ import { TithesModule } from './modules/tithes/tithes.module';
 import { EventsModule } from './modules/events/events.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { MinistriesModule } from './modules/ministries/ministries.module';
+import { HouseholdsModule } from './modules/households/households.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AppConfigService } from './config/config.service';
 
@@ -54,6 +56,8 @@ import { AppConfigService } from './config/config.service';
     EventsModule,
     AttendanceModule,
     MinistriesModule,
+    HouseholdsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

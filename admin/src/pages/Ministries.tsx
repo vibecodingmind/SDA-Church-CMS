@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ministries as ministriesApi, organization } from '../api/client';
+import { ministries as ministriesApi, organization, members as membersApi } from '../api/client';
 import styles from './Members.module.css';
 
 export function Ministries() {
@@ -12,6 +12,9 @@ export function Ministries() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [manageMinistry, setManageMinistry] = useState<any | null>(null);
+  const [assignMemberId, setAssignMemberId] = useState('');
+  const [members, setMembers] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -122,6 +125,22 @@ export function Ministries() {
                   <button
                     className={styles.smBtn}
                     onClick={async () => {
+                      try {
+                        const detail = await ministriesApi.get(m.id);
+                        const mems = await membersApi.list();
+                        setManageMinistry(detail);
+                        setMembers(mems.filter((mb) => mb.churchId === detail.churchId));
+                        setAssignMemberId('');
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Failed');
+                      }
+                    }}
+                  >
+                    Manage
+                  </button>
+                  <button
+                    className={styles.smBtn}
+                    onClick={async () => {
                       if (confirm('Delete this ministry?')) {
                         try {
                           await ministriesApi.delete(m.id);
@@ -139,6 +158,73 @@ export function Ministries() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {manageMinistry && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg)', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', width: '90%' }}>
+            <h2 style={{ margin: '0 0 1rem' }}>Manage: {manageMinistry.name}</h2>
+            <p className={styles.muted} style={{ marginBottom: '1rem' }}>Assigned members</p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem', maxHeight: '200px', overflow: 'auto' }}>
+              {(manageMinistry.memberMinistries || []).map((mm: any) => (
+                <li key={mm.memberId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0' }}>
+                  <span>{mm.member?.fullName || mm.memberId}</span>
+                  <button
+                    className={styles.smBtn}
+                    onClick={async () => {
+                      try {
+                        await ministriesApi.removeMember(manageMinistry.id, mm.memberId);
+                        const detail = await ministriesApi.get(manageMinistry.id);
+                        setManageMinistry(detail);
+                        load();
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Failed');
+                      }
+                    }}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+              {(!manageMinistry.memberMinistries || manageMinistry.memberMinistries.length === 0) && (
+                <li className={styles.muted}>No members assigned</li>
+              )}
+            </ul>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <select
+                value={assignMemberId}
+                onChange={(e) => setAssignMemberId(e.target.value)}
+                style={{ flex: 1, padding: '0.5rem 1rem', borderRadius: '0.5rem' }}
+              >
+                <option value="">Add member…</option>
+                {members
+                  .filter((mb) => !(manageMinistry.memberMinistries || []).some((mm: any) => mm.memberId === mb.id))
+                  .map((mb) => (
+                    <option key={mb.id} value={mb.id}>{mb.fullName}</option>
+                  ))}
+              </select>
+              <button
+                className={styles.addBtn}
+                disabled={!assignMemberId}
+                onClick={async () => {
+                  if (!assignMemberId) return;
+                  try {
+                    await ministriesApi.assignMember(manageMinistry.id, { memberId: assignMemberId });
+                    const detail = await ministriesApi.get(manageMinistry.id);
+                    setManageMinistry(detail);
+                    setAssignMemberId('');
+                    load();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Failed');
+                  }
+                }}
+              >
+                Add
+              </button>
+            </div>
+            <button className={styles.smBtn} onClick={() => setManageMinistry(null)}>Close</button>
+          </div>
+        </div>
       )}
     </div>
   );

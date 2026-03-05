@@ -45,9 +45,11 @@ export const members = {
   list: () =>
     api<{ id: string; fullName: string; email: string | null; churchId: string; phone?: string; status?: string }[]>('/members'),
   get: (id: string) => api<any>(`/members/${id}`),
-  create: (data: { fullName: string; email?: string; phone?: string; churchId?: string }) =>
+  create: (data: { fullName: string; email?: string; phone?: string; churchId?: string; householdId?: string }) =>
     api<any>('/members', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<{ fullName: string; email: string; phone: string; address: string; birthDate: string; membershipDate: string; status: string }>) =>
+  bulkCreate: (data: { churchId: string; householdId?: string; members: { fullName: string; email?: string; phone?: string }[] }) =>
+    api<{ created: number }>('/members/bulk', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ fullName: string; email: string; phone: string; address: string; birthDate: string; membershipDate: string; status: string; householdId: string }>) =>
     api<any>(`/members/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/members/${id}`, { method: 'DELETE' }),
 };
@@ -158,6 +160,36 @@ export const organization = {
       api<any>(`/organization/churches/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) => api(`/organization/churches/${id}`, { method: 'DELETE' }),
   },
+};
+
+export const households = {
+  list: (churchId?: string) =>
+    api<any[]>(`/households${churchId ? `?churchId=${churchId}` : ''}`),
+  get: (id: string) => api<any>(`/households/${id}`),
+  create: (data: { churchId: string; name: string; address?: string }) =>
+    api<any>('/households', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; address?: string }) =>
+    api<any>(`/households/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => api(`/households/${id}`, { method: 'DELETE' }),
+};
+
+export const reports = {
+  dashboard: () => api<{ membersCount: number; churchesCount: number; eventsCount: number; tithesTotal: number }>('/reports/dashboard'),
+  tithes: (params?: { churchId?: string; from?: string; to?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.churchId) q.set('churchId', params.churchId);
+    if (params?.from) q.set('from', params.from);
+    if (params?.to) q.set('to', params.to);
+    return api<any>(`/reports/tithes?${q}`);
+  },
+};
+
+export const auth = {
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 };
 
 export const audit = {

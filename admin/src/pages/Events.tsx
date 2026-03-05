@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { events as eventsApi, organization } from '../api/client';
+import { events as eventsApi, organization, attendance as attendanceApi, members as membersApi } from '../api/client';
 import styles from './Members.module.css';
 
 export function Events() {
   const [list, setList] = useState<any[]>([]);
   const [churches, setChurches] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -13,17 +14,21 @@ export function Events() {
   const [eventDate, setEventDate] = useState('');
   const [eventType, setEventType] = useState('SERVICE');
   const [submitting, setSubmitting] = useState(false);
+  const [checkInEvent, setCheckInEvent] = useState<any | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const [e, ch] = await Promise.all([
+      const [e, ch, m] = await Promise.all([
         eventsApi.list(),
         organization.churches.list(),
+        membersApi.list(),
       ]);
       setList(e);
       setChurches(ch);
+      setMembers(m);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -136,6 +141,15 @@ export function Events() {
                 <td>
                   <button
                     className={styles.smBtn}
+                    onClick={() => {
+                      setCheckInEvent(ev);
+                      setSelectedMemberIds(new Set());
+                    }}
+                  >
+                    Check In
+                  </button>
+                  <button
+                    className={styles.smBtn}
                     onClick={async () => {
                       if (confirm('Delete this event?')) {
                         try {
@@ -154,6 +168,60 @@ export function Events() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {checkInEvent && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg)', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+            <h2 style={{ margin: '0 0 1rem' }}>Check In: {checkInEvent.title}</h2>
+            <p className={styles.muted} style={{ marginBottom: '1rem' }}>Select members present</p>
+            <div style={{ maxHeight: '250px', overflow: 'auto', marginBottom: '1rem' }}>
+              {members
+                .filter((m) => m.churchId === checkInEvent.churchId)
+                .map((m) => (
+                  <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedMemberIds.has(m.id)}
+                      onChange={(e) => {
+                        const next = new Set(selectedMemberIds);
+                        if (e.target.checked) next.add(m.id);
+                        else next.delete(m.id);
+                        setSelectedMemberIds(next);
+                      }}
+                    />
+                    <span>{m.fullName}</span>
+                  </label>
+                ))}
+              {members.filter((m) => m.churchId === checkInEvent.churchId).length === 0 && (
+                <p className={styles.muted}>No members in this church</p>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className={styles.addBtn}
+                disabled={selectedMemberIds.size === 0}
+                onClick={async () => {
+                  setSubmitting(true);
+                  try {
+                    for (const memberId of selectedMemberIds) {
+                      await attendanceApi.create({ eventId: checkInEvent.id, memberId });
+                    }
+                    setCheckInEvent(null);
+                    load();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Failed to record attendance');
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+              >
+                {submitting ? 'Saving…' : `Record ${selectedMemberIds.size} attendance`}
+              </button>
+              <button className={styles.smBtn} onClick={() => setCheckInEvent(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

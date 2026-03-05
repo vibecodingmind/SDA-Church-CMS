@@ -46,6 +46,15 @@ export function Layout() {
           <NavLink to="/audit" className={({ isActive }) => (isActive ? styles.active : '')}>
             Audit Logs
           </NavLink>
+          <NavLink to="/households" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Households
+          </NavLink>
+          <NavLink to="/profile" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Profile
+          </NavLink>
+          <NavLink to="/reports" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Reports
+          </NavLink>
         </nav>
         <div className={styles.user}>
           <span className={styles.userName}>{user?.fullName}</span>

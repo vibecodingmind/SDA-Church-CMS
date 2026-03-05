@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { AcceptInviteDto } from '../users/dto/accept-invite.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -61,5 +62,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout - revoke refresh tokens' })
   async logout(@CurrentUser() user: JwtPayload) {
     return this.auth.logout(user.sub);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Change password (authenticated user)' })
+  async changePassword(@Body() dto: ChangePasswordDto, @CurrentUser() user: JwtPayload) {
+    return this.auth.changePassword(user.sub, dto.currentPassword, dto.newPassword);
   }
 }

@@ -6,6 +6,10 @@ export class CreateMemberDto {
   @IsUUID('all')
   churchId?: string;
 
+  @IsOptional()
+  @IsUUID('all')
+  householdId?: string;
+
   @IsString()
   @MinLength(2)
   fullName: string;

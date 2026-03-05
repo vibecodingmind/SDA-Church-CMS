@@ -11,6 +11,9 @@ import { Audit } from './pages/Audit';
 import { Tithes } from './pages/Tithes';
 import { Events } from './pages/Events';
 import { Ministries } from './pages/Ministries';
+import { Households } from './pages/Households';
+import { Profile } from './pages/Profile';
+import { Reports } from './pages/Reports';
 import { useAuth } from './hooks/useAuth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="tithes" element={<Tithes />} />
           <Route path="events" element={<Events />} />
           <Route path="ministries" element={<Ministries />} />
+          <Route path="households" element={<Households />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="users" element={<Users />} />
           <Route path="roles" element={<Roles />} />
           <Route path="permissions" element={<Permissions />} />

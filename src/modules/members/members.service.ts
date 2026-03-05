@@ -26,6 +26,7 @@ export class MembersService {
     }
     const data = {
       churchId,
+      householdId: dto.householdId,
       fullName: dto.fullName,
       email: dto.email,
       phone: dto.phone,
@@ -41,7 +42,7 @@ export class MembersService {
     const where = this.scope.memberWhereClause(scope);
     return this.prisma.member.findMany({
       where,
-      include: { church: true },
+      include: { church: true, household: true },
     });
   }
 
@@ -49,7 +50,7 @@ export class MembersService {
     const where = this.scope.memberWhereClause(scope);
     const member = await this.prisma.member.findFirst({
       where: { ...where, id },
-      include: { church: true },
+      include: { church: true, household: true },
     });
     if (!member) throw new NotFoundException('Member not found');
     return member;
@@ -70,5 +71,28 @@ export class MembersService {
     await this.findOne(id, scope);
     await this.prisma.member.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  async bulkCreate(
+    churchId: string,
+    householdId: string | undefined,
+    members: { fullName: string; email?: string; phone?: string }[],
+    scope: JwtPayload['scope'],
+  ) {
+    const churchWhere = this.scope.churchWhereClause(scope);
+    const church = await this.prisma.church.findFirst({
+      where: { ...churchWhere, id: churchId },
+    });
+    if (!church) throw new NotFoundException('Church not found');
+    const created = await this.prisma.member.createMany({
+      data: members.map((m) => ({
+        churchId,
+        householdId,
+        fullName: m.fullName,
+        email: m.email,
+        phone: m.phone,
+      })),
+    });
+    return { created: created.count };
   }
 }

@@ -68,6 +68,7 @@ model Church {
   district   District    @relation(fields: [districtId], references: [id], onDelete: Cascade)
   users      User[]
   members    Member[]
+  households Household[]
   tithes     Tithe[]
   events     ChurchEvent[]
   ministries Ministry[]
@@ -76,10 +77,27 @@ model Church {
   @@map("churches")
 }
 
+// Household: Family grouping for members
+model Household {
+  id        String   @id @default(uuid())
+  churchId  String
+  name      String   // e.g. "Smith Family"
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church  Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  members Member[]
+
+  @@index([churchId])
+  @@map("households")
+}
+
 // Member: Church member with profile and scope
 model Member {
   id             String       @id @default(uuid())
   churchId       String
+  householdId    String?
   fullName       String
   email          String?
   phone          String?
@@ -90,12 +108,14 @@ model Member {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  church       Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
-  tithes       Tithe[]
-  attendances  Attendance[]
-  ministries   MemberMinistry[]
+  church    Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  household Household?     @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  tithes    Tithe[]
+  attendances Attendance[]
+  ministries MemberMinistry[]
 
   @@index([churchId])
+  @@index([householdId])
   @@index([status])
   @@map("members")
 }

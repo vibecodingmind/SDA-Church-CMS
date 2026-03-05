@@ -11,6 +11,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
+import { BulkCreateMembersDto } from './dto/bulk-create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -34,6 +35,12 @@ export class MembersController {
   @RequirePermissions('MEMBER:CREATE')
   create(@Body() dto: CreateMemberDto, @CurrentUser() user: JwtPayload) {
     return this.members.create(dto, user.scope);
+  }
+
+  @Post('bulk')
+  @RequirePermissions('MEMBER:CREATE')
+  bulkCreate(@Body() dto: BulkCreateMembersDto, @CurrentUser() user: JwtPayload) {
+    return this.members.bulkCreate(dto.churchId, dto.householdId, dto.members, user.scope);
   }
 
   @Get()

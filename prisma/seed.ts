@@ -67,6 +67,10 @@ const PERMISSIONS = [
   { name: 'MINISTRY:CREATE', resource: 'MINISTRY', action: 'CREATE', description: 'Create ministry' },
   { name: 'MINISTRY:UPDATE', resource: 'MINISTRY', action: 'UPDATE', description: 'Update ministry' },
   { name: 'MINISTRY:DELETE', resource: 'MINISTRY', action: 'DELETE', description: 'Delete ministry' },
+  { name: 'HOUSEHOLD:VIEW', resource: 'HOUSEHOLD', action: 'VIEW', description: 'View households' },
+  { name: 'HOUSEHOLD:CREATE', resource: 'HOUSEHOLD', action: 'CREATE', description: 'Create household' },
+  { name: 'HOUSEHOLD:UPDATE', resource: 'HOUSEHOLD', action: 'UPDATE', description: 'Update household' },
+  { name: 'HOUSEHOLD:DELETE', resource: 'HOUSEHOLD', action: 'DELETE', description: 'Delete household' },
 ];
 
 const ROLES = [
@@ -102,9 +106,9 @@ async function main() {
   const permissionMap = Object.fromEntries(allPermissions.map((p) => [p.name, p.id]));
 
   const rolePermissions: Record<string, string[]> = {
-    PASTOR: ['MEMBER:VIEW', 'MEMBER:CREATE', 'MEMBER:UPDATE', 'USER:VIEW', 'TITHE:VIEW', 'TITHE:CREATE', 'EVENT:VIEW', 'EVENT:CREATE', 'ATTENDANCE:VIEW', 'ATTENDANCE:CREATE', 'MINISTRY:VIEW'],
-    CHURCH_ADMIN: ['MEMBER:VIEW', 'MEMBER:CREATE', 'MEMBER:UPDATE', 'MEMBER:DELETE', 'USER:VIEW', 'USER:CREATE', 'USER:UPDATE', 'TITHE:VIEW', 'TITHE:CREATE', 'TITHE:UPDATE', 'EVENT:VIEW', 'EVENT:CREATE', 'EVENT:UPDATE', 'ATTENDANCE:VIEW', 'ATTENDANCE:CREATE', 'ATTENDANCE:DELETE', 'MINISTRY:VIEW', 'MINISTRY:CREATE', 'MINISTRY:UPDATE'],
-    DISTRICT_ADMIN: [...Object.keys(permissionMap).filter((n) => n.startsWith('MEMBER:') || n.startsWith('USER:') || n.startsWith('TITHE:') || n.startsWith('EVENT:') || n.startsWith('ATTENDANCE:') || n.startsWith('MINISTRY:')), 'ORGANIZATION:VIEW', 'ORGANIZATION:UPDATE'],
+    PASTOR: ['MEMBER:VIEW', 'MEMBER:CREATE', 'MEMBER:UPDATE', 'USER:VIEW', 'TITHE:VIEW', 'TITHE:CREATE', 'EVENT:VIEW', 'EVENT:CREATE', 'ATTENDANCE:VIEW', 'ATTENDANCE:CREATE', 'MINISTRY:VIEW', 'HOUSEHOLD:VIEW', 'HOUSEHOLD:CREATE', 'HOUSEHOLD:UPDATE'],
+    CHURCH_ADMIN: ['MEMBER:VIEW', 'MEMBER:CREATE', 'MEMBER:UPDATE', 'MEMBER:DELETE', 'USER:VIEW', 'USER:CREATE', 'USER:UPDATE', 'TITHE:VIEW', 'TITHE:CREATE', 'TITHE:UPDATE', 'EVENT:VIEW', 'EVENT:CREATE', 'EVENT:UPDATE', 'ATTENDANCE:VIEW', 'ATTENDANCE:CREATE', 'ATTENDANCE:DELETE', 'MINISTRY:VIEW', 'MINISTRY:CREATE', 'MINISTRY:UPDATE', 'HOUSEHOLD:VIEW', 'HOUSEHOLD:CREATE', 'HOUSEHOLD:UPDATE', 'HOUSEHOLD:DELETE'],
+    DISTRICT_ADMIN: [...Object.keys(permissionMap).filter((n) => n.startsWith('MEMBER:') || n.startsWith('USER:') || n.startsWith('TITHE:') || n.startsWith('EVENT:') || n.startsWith('ATTENDANCE:') || n.startsWith('MINISTRY:') || n.startsWith('HOUSEHOLD:')), 'ORGANIZATION:VIEW', 'ORGANIZATION:UPDATE'],
     CONFERENCE_ADMIN: Object.keys(permissionMap),
   };
 
