@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
@@ -18,6 +20,11 @@ import { AppConfigService } from './config/config.service';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'admin/dist'),
+      serveRoot: '/',
+      exclude: ['/api*'],
+    }),
     ConfigModule,
     PrismaModule,
     CommonModule,

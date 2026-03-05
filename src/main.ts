@@ -11,6 +11,7 @@ async function bootstrap() {
 
   const config = app.get(AppConfigService);
 
+  app.setGlobalPrefix('api');
   setupSwagger(app);
 
   app.use(helmet());

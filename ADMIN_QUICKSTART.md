@@ -6,7 +6,7 @@
 ./scripts/setup.sh
 ```
 
-Then open **http://localhost:3000** in your browser.
+Then open **http://localhost:3002** in your browser.
 
 ## Login
 
@@ -34,12 +34,12 @@ Then open **http://localhost:3000** in your browser.
 docker compose up -d
 ```
 
-Then open http://localhost:3000
+Then open http://localhost:3002
 
 ## Ports
 
 | Service   | URL                         |
 |-----------|-----------------------------|
-| Admin UI  | http://localhost:3000      |
+| Admin UI  | http://localhost:3002      |
 | API       | http://localhost:3001      |
 | Swagger   | http://localhost:3001/api/docs |

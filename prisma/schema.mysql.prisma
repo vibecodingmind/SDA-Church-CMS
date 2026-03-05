@@ -1,0 +1,234 @@
+// Church CMS IAM - MySQL version for cPanel
+// Use: DATABASE_URL=mysql://user:pass@host:3306/db && npx prisma generate --schema=prisma/schema.mysql.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// Same models as schema.prisma - MySQL compatible
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+model Conference {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  districts District[]
+  users     User[]
+
+  @@map("conferences")
+}
+
+model District {
+  id           String   @id @default(uuid())
+  conferenceId String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  churches   Church[]
+  users       User[]
+
+  @@index([conferenceId])
+  @@map("districts")
+}
+
+model Church {
+  id         String   @id @default(uuid())
+  districtId String
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  users    User[]
+  members  Member[]
+
+  @@index([districtId])
+  @@map("churches")
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  churchId  String
+  fullName  String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@map("members")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users           User[]
+  rolePermissions RolePermission[]
+  userInvites     UserInvite[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  resource    String
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id                   String     @id @default(uuid())
+  fullName             String
+  email                String     @unique
+  passwordHash         String
+  roleId               String
+  churchId             String?
+  districtId           String?
+  conferenceId         String?
+  status               UserStatus @default(ACTIVE)
+  termStart            DateTime?
+  termEnd              DateTime?
+  failedLoginAttempts  Int        @default(0)
+  lockedUntil          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  role       Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  church     Church?       @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  district   District?     @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  conference Conference?   @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  loginAttempts       LoginAttempt[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([email])
+  @@index([roleId])
+  @@index([churchId])
+  @@index([districtId])
+  @@index([conferenceId])
+  @@index([status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  timestamp DateTime @default(now())
+  ipAddress String?
+  metadata  Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([resource])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+model UserInvite {
+  id           String    @id @default(uuid())
+  email        String
+  roleId       String
+  churchId     String?
+  districtId   String?
+  conferenceId String?
+  tokenHash    String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([email])
+  @@index([tokenHash])
+  @@map("user_invites")
+}

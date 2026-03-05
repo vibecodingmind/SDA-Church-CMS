@@ -156,7 +156,7 @@ App runs on port **3001** when using Docker.
 
 ```bash
 ./scripts/setup.sh
-# Then open http://localhost:3000 - Admin UI (login: admin@samplechurch.org / Password123!)
+# Then open http://localhost:3002 - Admin UI (login: admin@samplechurch.org / Password123!)
 # API at http://localhost:3001 | Swagger at http://localhost:3001/api/docs
 ```
 
@@ -167,7 +167,7 @@ docker compose up -d
 docker compose exec app npx prisma db seed
 ```
 
-**Admin UI** runs on port 3000. **API** runs on port 3001.
+**Admin UI** runs on port 3002. **API** runs on port 3001.
 
 **Development:**
 ```bash

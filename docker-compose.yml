@@ -2,7 +2,7 @@ services:
   admin:
     build: ./admin
     ports:
-      - "3000:80"
+      - "3002:80"
     depends_on:
       - app
 
@@ -14,7 +14,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/church_cms
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production-min-32-chars}
       NODE_ENV: production
-      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:3001
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3002,http://localhost:5173,http://localhost:3001
     depends_on:
       db:
         condition: service_healthy

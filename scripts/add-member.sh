@@ -3,7 +3,7 @@
 # churchId is optional - uses your church scope when omitted
 FULL_NAME="${1:-New Member}"
 EMAIL="${2:-}"
-API_URL="${3:-http://localhost:3001}"
+API_URL="${3:-http://localhost:3001/api}"
 
 TOKEN=$(curl -s -X POST "$API_URL/auth/login" -H "Content-Type: application/json" \
   -d '{"email":"admin@samplechurch.org","password":"Password123!"}' | jq -r '.accessToken')

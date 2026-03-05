@@ -1,17 +1,34 @@
 /**
  * Seed script: Default permissions, roles, and sample organization.
- * Run: npx prisma db seed
- * No hardcoded permission strings in guards - permissions come from DB and are embedded in JWT at login.
+ * Run: npx prisma db seed (PostgreSQL)
+ * For MySQL: DATABASE_URL=mysql://... npx prisma generate --schema=prisma/schema.mysql.prisma && npx ts-node prisma/seed.ts
  */
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
 
 const connectionString = process.env.DATABASE_URL!;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+let prisma: PrismaClient;
+
+if (connectionString.startsWith('mysql://')) {
+  // MySQL: use mariadb adapter (requires: npm install @prisma/adapter-mariadb mariadb)
+  const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
+  const mariadb = require('mariadb');
+  const url = new URL(connectionString);
+  const pool = mariadb.createPool({
+    host: url.hostname,
+    port: parseInt(url.port || '3306', 10),
+    user: url.username,
+    password: url.password,
+    database: url.pathname.slice(1),
+  });
+  prisma = new PrismaClient({ adapter: new PrismaMariaDb(pool) });
+} else {
+  // PostgreSQL
+  const { PrismaPg } = require('@prisma/adapter-pg');
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString });
+  prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+}
 
 const PERMISSIONS = [
   { name: 'MEMBER:VIEW', resource: 'MEMBER', action: 'VIEW', description: 'View members' },
